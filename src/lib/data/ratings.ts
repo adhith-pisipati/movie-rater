@@ -133,7 +133,7 @@ export async function fetchCrowdScore(movieId: string): Promise<number | null> {
     .eq("movie_id", movieId);
   if (error) throw error;
   if (!data || data.length === 0) return null;
-  const scores = data.map((row: { score: number }) => row.score);
+  const scores = data.map((row: { score: number }) => Number(row.score));
   const avg = scores.reduce((sum: number, s: number) => sum + s, 0) / scores.length;
   return Math.round(avg * 10) / 10;
 }
@@ -147,7 +147,7 @@ export async function fetchFriendsScore(movieId: string, friendIds: string[]): P
     .in("user_id", friendIds);
   if (error) throw error;
   if (!data || data.length === 0) return null;
-  const scores = data.map((row: { score: number }) => row.score);
+  const scores = data.map((row: { score: number }) => Number(row.score));
   const avg = scores.reduce((sum: number, s: number) => sum + s, 0) / scores.length;
   return Math.round(avg * 10) / 10;
 }
