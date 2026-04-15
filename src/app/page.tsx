@@ -11,7 +11,7 @@ import { ProfileHeader } from "@/components/ProfileHeader";
 import { RankingsView } from "@/components/RankingsView";
 import { RatingModal } from "@/components/RatingModal";
 import { fetchFriendships, sendFriendRequest, updateFriendRequestStatus } from "@/lib/data/friendships";
-import { ensureGlobalMovieCatalogSeeded, fetchMovies, importMoviesByTitles } from "@/lib/data/movies";
+import { deleteMovieGlobally, ensureGlobalMovieCatalogSeeded, fetchMovies, importMoviesByTitles } from "@/lib/data/movies";
 import { fetchMyProfile, searchProfiles } from "@/lib/data/profiles";
 import { loadUserRatingState, persistFullUserRatingState } from "@/lib/data/ratings";
 import {
@@ -310,6 +310,26 @@ export default function HomePage() {
     });
   }
 
+  async function handleRemoveMovieGlobally(movieId: string) {
+    if (activeRating?.movieId === movieId) setActiveRating(null);
+    if (detailMovieId === movieId) setDetailMovieId(null);
+    await deleteMovieGlobally(movieId);
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        movies: prev.movies.filter((m) => m.id !== movieId),
+        rankings: removeMovieFromRankings(prev.rankings, movieId),
+        sessions: Object.fromEntries(Object.entries(prev.sessions).filter(([id]) => id !== movieId)),
+        ratedAtByMovie: Object.fromEntries(Object.entries(prev.ratedAtByMovie).filter(([id]) => id !== movieId)),
+        haventWatchedAtByMovie: Object.fromEntries(
+          Object.entries(prev.haventWatchedAtByMovie).filter(([id]) => id !== movieId)
+        )
+      };
+      persistState(nextState);
+      return nextState;
+    });
+  }
+
   function handleExport() {
     const csv = exportRankingsCsv(state);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -393,6 +413,8 @@ export default function HomePage() {
                 bucketLabel={state.haventWatchedAtByMovie[movie.id] ? "Haven't watched" : "Not rated"}
                 onRate={() => startRating(movie.id)}
                 onRemove={() => removeMovieForCurrentUser(movie.id)}
+                currentUserId={user?.id}
+                onRemoveGlobally={() => handleRemoveMovieGlobally(movie.id)}
               />
             ))}
           </div>
@@ -406,6 +428,8 @@ export default function HomePage() {
           rankedById={rankedById}
           onInspectMovie={setDetailMovieId}
           onRemoveMovie={removeMovieForCurrentUser}
+          onRemoveMovieGlobally={handleRemoveMovieGlobally}
+          currentUserId={user?.id}
         />
       )}
       {tab === "import" && <ImportPanel onImport={handleImport} />}
