@@ -284,7 +284,7 @@ export default function HomePage() {
   }
 
   async function handleImport(raw: string) {
-    await importMoviesByTitles(parseImport(raw));
+    await importMoviesByTitles(parseImport(raw), user?.id);
     const movies = await fetchMovies();
     setState((prev) => ({ ...prev, movies }));
     setTab("movies");
