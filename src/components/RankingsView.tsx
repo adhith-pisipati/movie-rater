@@ -8,9 +8,10 @@ interface RankingsViewProps {
   movieById: Map<string, Movie>;
   rankedById: Map<string, RankedMovie>;
   onInspectMovie?: (movieId: string) => void;
+  onRemoveMovie?: (movieId: string) => void;
 }
 
-export function RankingsView({ rankings, movieById, rankedById, onInspectMovie }: RankingsViewProps) {
+export function RankingsView({ rankings, movieById, rankedById, onInspectMovie, onRemoveMovie }: RankingsViewProps) {
   return (
     <section className="space-y-4">
       {BUCKETS.map((bucket) => (
@@ -35,6 +36,11 @@ export function RankingsView({ rankings, movieById, rankedById, onInspectMovie }
                     {onInspectMovie && (
                       <button className="btn" onClick={() => onInspectMovie(movieId)}>
                         Details
+                      </button>
+                    )}
+                    {onRemoveMovie && (
+                      <button className="btn" onClick={() => onRemoveMovie(movieId)}>
+                        X
                       </button>
                     )}
                   </div>

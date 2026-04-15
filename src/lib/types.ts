@@ -47,4 +47,5 @@ export interface AppState {
   comparisonHistory: ComparisonResult[];
   ratedAtByMovie: Record<string, string>;
   haventWatchedAtByMovie: Record<string, string>;
+  removedAtByMovie: Record<string, string>;
 }

@@ -3,7 +3,14 @@ import { supabase } from "@/lib/supabase/client";
 import { AppState, ComparisonSession } from "@/lib/types";
 import { RatingRow, UserMovieStateRow } from "@/lib/supabase/types";
 
-export async function loadUserRatingState(userId: string): Promise<Pick<AppState, "rankings" | "sessions" | "comparisonHistory" | "ratedAtByMovie" | "haventWatchedAtByMovie">> {
+export async function loadUserRatingState(
+  userId: string
+): Promise<
+  Pick<
+    AppState,
+    "rankings" | "sessions" | "comparisonHistory" | "ratedAtByMovie" | "haventWatchedAtByMovie" | "removedAtByMovie"
+  >
+> {
   const [ratingsResult, statesResult] = await Promise.all([
     supabase.from("ratings").select("*").eq("user_id", userId).order("rank_in_bucket", { ascending: true }),
     supabase.from("user_movie_states").select("*").eq("user_id", userId).eq("status", "havent_watched")
@@ -20,6 +27,7 @@ export async function loadUserRatingState(userId: string): Promise<Pick<AppState
   const comparisonHistory: AppState["comparisonHistory"] = [];
   const ratedAtByMovie: Record<string, string> = {};
   const haventWatchedAtByMovie: Record<string, string> = {};
+  const removedAtByMovie: Record<string, string> = {};
 
   ratings.forEach((rating) => {
     rankings[rating.bucket].push(rating.movie_id);
@@ -38,15 +46,25 @@ export async function loadUserRatingState(userId: string): Promise<Pick<AppState
   });
 
   movieStates.forEach((state) => {
-    haventWatchedAtByMovie[state.movie_id] = state.updated_at;
+    if (state.status === "removed") {
+      removedAtByMovie[state.movie_id] = state.updated_at;
+    } else {
+      haventWatchedAtByMovie[state.movie_id] = state.updated_at;
+    }
   });
 
-  return { rankings, sessions, comparisonHistory, ratedAtByMovie, haventWatchedAtByMovie };
+  const filteredRankings = {
+    good: rankings.good.filter((id) => !removedAtByMovie[id]),
+    okay: rankings.okay.filter((id) => !removedAtByMovie[id]),
+    bad: rankings.bad.filter((id) => !removedAtByMovie[id])
+  };
+
+  return { rankings: filteredRankings, sessions, comparisonHistory, ratedAtByMovie, haventWatchedAtByMovie, removedAtByMovie };
 }
 
 export async function persistFullUserRatingState(
   userId: string,
-  state: Pick<AppState, "movies" | "rankings" | "sessions" | "ratedAtByMovie" | "haventWatchedAtByMovie">
+  state: Pick<AppState, "movies" | "rankings" | "sessions" | "ratedAtByMovie" | "haventWatchedAtByMovie" | "removedAtByMovie">
 ): Promise<void> {
   const ranked = buildRankedMovies({
     ...state,
@@ -70,6 +88,12 @@ export async function persistFullUserRatingState(
     status: "havent_watched" as const,
     updated_at: updatedAt
   }));
+  const removedRows = Object.entries(state.removedAtByMovie).map(([movieId, updatedAt]) => ({
+    user_id: userId,
+    movie_id: movieId,
+    status: "removed" as const,
+    updated_at: updatedAt
+  }));
 
   const [{ error: deleteRatingsError }, { error: deleteStatesError }] = await Promise.all([
     supabase.from("ratings").delete().eq("user_id", userId),
@@ -84,8 +108,9 @@ export async function persistFullUserRatingState(
     if (error) throw error;
   }
 
-  if (watchedRows.length > 0) {
-    const { error } = await supabase.from("user_movie_states").insert(watchedRows);
+  const stateRows = [...watchedRows, ...removedRows];
+  if (stateRows.length > 0) {
+    const { error } = await supabase.from("user_movie_states").insert(stateRows);
     if (error) throw error;
   }
 }

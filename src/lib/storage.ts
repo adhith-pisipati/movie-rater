@@ -13,7 +13,8 @@ export function createInitialState(): AppState {
     sessions: {},
     comparisonHistory: [],
     ratedAtByMovie: {},
-    haventWatchedAtByMovie: {}
+    haventWatchedAtByMovie: {},
+    removedAtByMovie: {}
   };
 }
 

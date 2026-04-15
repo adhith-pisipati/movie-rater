@@ -32,7 +32,7 @@ export interface RatingRow {
 export interface UserMovieStateRow {
   user_id: string;
   movie_id: string;
-  status: "havent_watched";
+  status: "havent_watched" | "removed";
   updated_at: string;
 }
 

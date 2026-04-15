@@ -11,7 +11,7 @@ import { ProfileHeader } from "@/components/ProfileHeader";
 import { RankingsView } from "@/components/RankingsView";
 import { RatingModal } from "@/components/RatingModal";
 import { fetchFriendships, sendFriendRequest, updateFriendRequestStatus } from "@/lib/data/friendships";
-import { fetchMovies, importMoviesByTitles } from "@/lib/data/movies";
+import { ensureGlobalMovieCatalogSeeded, fetchMovies, importMoviesByTitles } from "@/lib/data/movies";
 import { fetchMyProfile, searchProfiles } from "@/lib/data/profiles";
 import { loadUserRatingState, persistFullUserRatingState } from "@/lib/data/ratings";
 import {
@@ -62,6 +62,7 @@ export default function HomePage() {
     setLoading(true);
     setError(null);
     try {
+      await ensureGlobalMovieCatalogSeeded();
       const [movies, userRatings, myProfile, social] = await Promise.all([
         fetchMovies(),
         loadUserRatingState(currentUser.id),
@@ -75,7 +76,8 @@ export default function HomePage() {
         sessions: userRatings.sessions,
         comparisonHistory: userRatings.comparisonHistory,
         ratedAtByMovie: userRatings.ratedAtByMovie,
-        haventWatchedAtByMovie: userRatings.haventWatchedAtByMovie
+        haventWatchedAtByMovie: userRatings.haventWatchedAtByMovie,
+        removedAtByMovie: userRatings.removedAtByMovie
       });
       setProfile(myProfile);
       setFriendships(social);
@@ -140,8 +142,8 @@ export default function HomePage() {
       if (state.haventWatchedAtByMovie[movie.id]) notWatched.push(movie);
       else notRated.push(movie);
     });
-    return [...notRated, ...notWatched];
-  }, [state.movies, state.haventWatchedAtByMovie, rankedById]);
+    return [...notRated, ...notWatched].filter((movie) => !state.removedAtByMovie[movie.id]);
+  }, [state.movies, state.haventWatchedAtByMovie, state.removedAtByMovie, rankedById]);
 
   function persistState(nextState: AppState) {
     if (!user) return;
@@ -150,12 +152,17 @@ export default function HomePage() {
       rankings: nextState.rankings,
       sessions: nextState.sessions,
       ratedAtByMovie: nextState.ratedAtByMovie,
-      haventWatchedAtByMovie: nextState.haventWatchedAtByMovie
+      haventWatchedAtByMovie: nextState.haventWatchedAtByMovie,
+      removedAtByMovie: nextState.removedAtByMovie
     });
   }
 
   function startRating(movieId: string) {
     const baseRankings = removeMovieFromRankings(state.rankings, movieId);
+    setState((prev) => ({
+      ...prev,
+      removedAtByMovie: Object.fromEntries(Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId))
+    }));
     setActiveRating({
       movieId,
       low: 0,
@@ -198,7 +205,8 @@ export default function HomePage() {
         ratedAtByMovie: { ...prev.ratedAtByMovie, [movieId]: new Date().toISOString() },
         haventWatchedAtByMovie: Object.fromEntries(
           Object.entries(prev.haventWatchedAtByMovie).filter(([id]) => id !== movieId)
-        )
+        ),
+        removedAtByMovie: Object.fromEntries(Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId))
       };
       persistState(nextState);
       return nextState;
@@ -266,7 +274,8 @@ export default function HomePage() {
         ...prev,
         rankings: removeMovieFromRankings(prev.rankings, movieId),
         sessions: Object.fromEntries(Object.entries(prev.sessions).filter(([id]) => id !== movieId)),
-        haventWatchedAtByMovie: { ...prev.haventWatchedAtByMovie, [movieId]: new Date().toISOString() }
+        haventWatchedAtByMovie: { ...prev.haventWatchedAtByMovie, [movieId]: new Date().toISOString() },
+        removedAtByMovie: Object.fromEntries(Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId))
       };
       persistState(nextState);
       return nextState;
@@ -279,6 +288,26 @@ export default function HomePage() {
     const movies = await fetchMovies();
     setState((prev) => ({ ...prev, movies }));
     setTab("movies");
+  }
+
+  function removeMovieForCurrentUser(movieId: string) {
+    if (activeRating?.movieId === movieId) setActiveRating(null);
+    if (detailMovieId === movieId) setDetailMovieId(null);
+
+    setState((prev) => {
+      const nextState: AppState = {
+        ...prev,
+        rankings: removeMovieFromRankings(prev.rankings, movieId),
+        sessions: Object.fromEntries(Object.entries(prev.sessions).filter(([id]) => id !== movieId)),
+        ratedAtByMovie: Object.fromEntries(Object.entries(prev.ratedAtByMovie).filter(([id]) => id !== movieId)),
+        haventWatchedAtByMovie: Object.fromEntries(
+          Object.entries(prev.haventWatchedAtByMovie).filter(([id]) => id !== movieId)
+        ),
+        removedAtByMovie: { ...prev.removedAtByMovie, [movieId]: new Date().toISOString() }
+      };
+      persistState(nextState);
+      return nextState;
+    });
   }
 
   function handleExport() {
@@ -363,6 +392,7 @@ export default function HomePage() {
                 movie={movie}
                 bucketLabel={state.haventWatchedAtByMovie[movie.id] ? "Haven't watched" : "Not rated"}
                 onRate={() => startRating(movie.id)}
+                onRemove={() => removeMovieForCurrentUser(movie.id)}
               />
             ))}
           </div>
@@ -370,7 +400,13 @@ export default function HomePage() {
       )}
 
       {tab === "rankings" && (
-        <RankingsView rankings={state.rankings} movieById={movieById} rankedById={rankedById} onInspectMovie={setDetailMovieId} />
+        <RankingsView
+          rankings={state.rankings}
+          movieById={movieById}
+          rankedById={rankedById}
+          onInspectMovie={setDetailMovieId}
+          onRemoveMovie={removeMovieForCurrentUser}
+        />
       )}
       {tab === "import" && <ImportPanel onImport={handleImport} />}
       {tab === "friends" && (

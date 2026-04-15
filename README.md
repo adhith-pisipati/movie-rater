@@ -130,4 +130,5 @@ Skip fallback keeps flow moving when comparisons are hard.
 - Supabase is now the canonical source of truth for ratings/profile/social data.
 - Local component state is used only for interactive UI responsiveness.
 - Movie seed list is also provided in SQL and import UI.
+- A larger global movie seed list is auto-synced into the shared `movies` table on app load (idempotent, deduped).
 # movie-rater

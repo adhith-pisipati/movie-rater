@@ -105,11 +105,15 @@ before update on public.ratings
 for each row execute function public.set_updated_at();
 
 -- -------------------------------------------------------------------
--- User movie states (for "Haven't watched")
+-- User movie states (for "Haven't watched" and per-user removed movies)
 -- -------------------------------------------------------------------
 do $$ begin
   create type public.user_movie_status as enum ('havent_watched');
 exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter type public.user_movie_status add value if not exists 'removed';
+exception when others then null;
 end $$;
 
 create table if not exists public.user_movie_states (
