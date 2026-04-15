@@ -26,7 +26,7 @@ export async function fetchMovies(): Promise<Movie[]> {
   }));
 }
 
-export async function importMoviesByTitles(titles: string[]): Promise<void> {
+export async function importMoviesByTitles(titles: string[], userId?: string): Promise<void> {
   const cleaned = Array.from(new Set(titles.map((t) => t.trim()).filter(Boolean)));
   if (cleaned.length === 0) return;
 
@@ -45,7 +45,11 @@ export async function importMoviesByTitles(titles: string[]): Promise<void> {
 
   const toInsert = cleaned
     .filter((title) => !existingSet.has(normalizedByTitle.get(title) ?? ""))
-    .map((title) => ({ title, normalized_title: normalizedByTitle.get(title) ?? normalizeTitle(title) }));
+    .map((title) => ({
+      title,
+      normalized_title: normalizedByTitle.get(title) ?? normalizeTitle(title),
+      ...(userId ? { created_by: userId } : {})
+    }));
 
   if (toInsert.length === 0) return;
 
@@ -59,4 +63,9 @@ export async function ensureGlobalMovieCatalogSeeded(): Promise<void> {
   if (seededGlobalCatalog) return;
   await importMoviesByTitles(globalMovieSeedTitles);
   seededGlobalCatalog = true;
+}
+
+export async function deleteMovieGlobally(movieId: string): Promise<void> {
+  const { error } = await supabase.from("movies").delete().eq("id", movieId);
+  if (error) throw error;
 }
