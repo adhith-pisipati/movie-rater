@@ -1,4 +1,5 @@
-export const globalMovieSeedText = `Inception
+export const globalMovieSeedText = `Scale
+Inception
 The Dark Knight
 Interstellar
 Oppenhiemer
