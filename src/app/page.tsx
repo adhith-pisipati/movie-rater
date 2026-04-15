@@ -404,7 +404,7 @@ export default function HomePage() {
         <MovieDetailDrawer
           movie={detailMovie}
           rank={detailRanking}
-          session={detailSession}
+          session={detailSession ?? undefined}
           movieById={movieById}
           onClose={() => setDetailMovieId(null)}
           onRerate={() => {
