@@ -63,6 +63,7 @@ export function MovieSearchBar({
   return (
     <div ref={ref} className="relative mb-6">
       <input
+        aria-label="Search films"
         className="w-full rounded border border-line bg-transparent px-4 py-2.5 text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700 focus:border-accent/60"
         placeholder="Search any film…"
         value={query}
@@ -72,6 +73,11 @@ export function MovieSearchBar({
         }}
         onFocus={() => { if (query.trim().length > 0) setOpen(true); }}
       />
+      {open && query.trim().length > 0 && results.length === 0 && (
+        <ul className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded border border-line bg-cardBg shadow-xl shadow-black/40">
+          <li className="px-4 py-3 font-mono text-xs text-zinc-600">No results</li>
+        </ul>
+      )}
       {open && results.length > 0 && (
         <ul className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded border border-line bg-cardBg shadow-xl shadow-black/40">
           {results.map((movie) => (
