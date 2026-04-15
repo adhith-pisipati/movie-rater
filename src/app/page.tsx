@@ -7,6 +7,8 @@ import { FriendsPanel } from "@/components/FriendsPanel";
 import { ImportPanel } from "@/components/ImportPanel";
 import { MovieCard } from "@/components/MovieCard";
 import { MovieDetailDrawer } from "@/components/MovieDetailDrawer";
+import { MovieScoreCard } from "@/components/MovieScoreCard";
+import { MovieSearchBar } from "@/components/MovieSearchBar";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { RankingsView } from "@/components/RankingsView";
 import { RatingModal } from "@/components/RatingModal";
@@ -51,6 +53,7 @@ export default function HomePage() {
   const [tab, setTab] = useState<Tab>("movies");
   const [activeRating, setActiveRating] = useState<ActiveRating | null>(null);
   const [detailMovieId, setDetailMovieId] = useState<string | null>(null);
+  const [scoreCardMovieId, setScoreCardMovieId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -133,6 +136,11 @@ export default function HomePage() {
   const rankedMovies = useMemo(() => buildRankedMovies(state), [state]);
   const rankedById = useMemo(() => new Map(rankedMovies.map((r) => [r.movieId, r])), [rankedMovies]);
   const movieById = useMemo(() => new Map(state.movies.map((m) => [m.id, m])), [state.movies]);
+
+  const friendIds = useMemo(
+    () => friendships.friends.map((f) => f.friendProfile.id),
+    [friendships.friends]
+  );
 
   const unratedMovies = useMemo(() => {
     const pending = state.movies.filter((movie) => !rankedById.has(movie.id));
@@ -405,6 +413,14 @@ export default function HomePage() {
         </p>
       )}
 
+      <MovieSearchBar
+        movies={state.movies}
+        rankedById={rankedById}
+        haventWatchedAtByMovie={state.haventWatchedAtByMovie}
+        removedAtByMovie={state.removedAtByMovie}
+        onSelectMovie={(movie) => setScoreCardMovieId(movie.id)}
+      />
+
       {/* Navigation */}
       <nav className="mb-8 flex items-center justify-between border-b border-line pb-0">
         <div className="flex gap-6">
@@ -498,6 +514,19 @@ export default function HomePage() {
             setDetailMovieId(null);
             startRating(detailMovie.id);
           }}
+        />
+      )}
+
+      {scoreCardMovieId && movieById.get(scoreCardMovieId) && (
+        <MovieScoreCard
+          movie={movieById.get(scoreCardMovieId)!}
+          ranked={rankedById.get(scoreCardMovieId)}
+          friendIds={friendIds}
+          onRate={() => {
+            setScoreCardMovieId(null);
+            startRating(scoreCardMovieId);
+          }}
+          onClose={() => setScoreCardMovieId(null)}
         />
       )}
     </main>
