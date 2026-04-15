@@ -3,6 +3,11 @@ import { Movie, RankedMovie, RatingBucket } from "@/lib/types";
 import { RemovePopover } from "@/components/RemovePopover";
 
 const bucketLabel: Record<RatingBucket, string> = { good: "Good", okay: "Okay", bad: "Bad" };
+const bucketDot: Record<RatingBucket, string> = {
+  good: "bg-good",
+  okay: "bg-okay",
+  bad: "bg-bad"
+};
 
 interface RankingsViewProps {
   rankings: Record<RatingBucket, string[]>;
@@ -24,12 +29,22 @@ export function RankingsView({
   currentUserId
 }: RankingsViewProps) {
   return (
-    <section className="space-y-4">
+    <div className="space-y-10">
       {BUCKETS.map((bucket) => (
-        <article className="surface p-4" key={bucket}>
-          <h2 className="mb-3 text-lg font-semibold">{bucketLabel[bucket]}</h2>
-          <ol className="space-y-2">
-            {rankings[bucket].length === 0 && <li className="text-sm text-zinc-500">No rated movies here yet.</li>}
+        <section key={bucket}>
+          {/* Section header */}
+          <div className="mb-1 flex items-center gap-3">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${bucketDot[bucket]}`} />
+            <h2 className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-500">
+              {bucketLabel[bucket]}
+            </h2>
+            <div className="h-px flex-1 bg-line" />
+          </div>
+
+          <ol>
+            {rankings[bucket].length === 0 && (
+              <li className="py-4 font-mono text-xs text-zinc-700">Nothing here yet.</li>
+            )}
             {rankings[bucket].map((movieId, i) => {
               const movie = movieById.get(movieId);
               const rank = rankedById.get(movieId);
@@ -37,23 +52,34 @@ export function RankingsView({
               const canRemoveGlobally =
                 !!movie.createdBy && !!currentUserId && movie.createdBy === currentUserId;
               return (
-                <li key={movieId} className="flex items-center justify-between rounded-lg border border-line p-3">
-                  <div>
-                    <p className="font-medium">
-                      #{i + 1} {movie.title}
-                    </p>
-                    <p className="text-sm text-zinc-400">Overall #{rank.overallRank}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm">{rank.score.toFixed(1)}</p>
+                <li
+                  key={movieId}
+                  className="group flex items-center gap-4 border-b border-line/30 py-3 last:border-0"
+                >
+                  <span className="w-7 shrink-0 font-mono text-xs text-zinc-700">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+
+                  <span className="min-w-0 flex-1 font-display text-base text-zinc-100 leading-snug truncate">
+                    {movie.title}
+                  </span>
+
+                  <span className="shrink-0 font-mono text-xs text-zinc-600">
+                    {rank.score.toFixed(1)}
+                  </span>
+
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                     {onInspectMovie && (
-                      <button className="btn" onClick={() => onInspectMovie(movieId)}>
+                      <button
+                        className="btn py-1 text-xs"
+                        onClick={() => onInspectMovie(movieId)}
+                      >
                         Details
                       </button>
                     )}
                     {onRemoveMovie && (
                       <RemovePopover
-                        triggerClassName="btn"
+                        triggerClassName="flex h-6 w-6 items-center justify-center rounded border border-line text-zinc-500 text-sm transition-colors hover:border-accent/50 hover:text-accent"
                         triggerLabel={`Remove ${movie.title}`}
                         onRemove={() => onRemoveMovie(movieId)}
                         onRemoveGlobally={
@@ -68,8 +94,8 @@ export function RankingsView({
               );
             })}
           </ol>
-        </article>
+        </section>
       ))}
-    </section>
+    </div>
   );
 }

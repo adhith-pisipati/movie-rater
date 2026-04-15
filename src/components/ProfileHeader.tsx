@@ -24,7 +24,7 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
         username: username.trim(),
         full_name: fullName.trim() || null
       });
-      setMessage("Profile updated.");
+      setMessage("Saved.");
       setEditing(false);
       await onProfileUpdated();
     } catch (error) {
@@ -37,40 +37,45 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
   }
 
   return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Movie Rater</h1>
-        <p className="text-sm text-zinc-400">Comparative ranking with Supabase auth, profiles, and friends.</p>
-        {profile && (
-          <p className="mt-2 text-sm text-zinc-300">
-            Signed in as{" "}
-            <Link className="text-accent underline-offset-4 hover:underline" href={`/profile/${profile.username}`}>
-              @{profile.username}
-            </Link>
-          </p>
-        )}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {profile && !editing && (
-          <button className="btn" onClick={() => setEditing(true)}>
-            Edit profile
+    <header className="mb-8">
+      <div className="flex items-end justify-between gap-4 border-b border-line pb-5">
+        <div>
+          <h1 className="font-display text-[2.75rem] font-light italic leading-none tracking-tight text-zinc-100">
+            Movie Rater
+          </h1>
+          {profile && (
+            <p className="mt-2.5 font-mono text-[10px] tracking-[0.2em] uppercase text-zinc-600">
+              <Link href={`/profile/${profile.username}`} className="transition-colors hover:text-accent">
+                @{profile.username}
+              </Link>
+            </p>
+          )}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2 pb-0.5">
+          {profile && !editing && (
+            <button className="btn" onClick={() => setEditing(true)}>
+              Edit profile
+            </button>
+          )}
+          <button className="btn" onClick={logout}>
+            Sign out
           </button>
-        )}
-        <button className="btn" onClick={logout}>
-          Log out
-        </button>
+        </div>
       </div>
-      {profile && editing && (
-        <div className="surface w-full p-4">
+
+      {editing && (
+        <div className="mt-4 surface p-4">
+          <p className="mb-3 font-mono text-[10px] tracking-[0.18em] uppercase text-zinc-600">Edit profile</p>
           <div className="grid gap-2 sm:grid-cols-2">
             <input
-              className="rounded-lg border border-line bg-zinc-900 px-3 py-2 text-sm"
+              className="rounded border border-line bg-transparent px-3 py-2 text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700 focus:border-accent/60"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
             />
             <input
-              className="rounded-lg border border-line bg-zinc-900 px-3 py-2 text-sm"
+              className="rounded border border-line bg-transparent px-3 py-2 text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700 focus:border-accent/60"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Full name (optional)"
@@ -84,7 +89,7 @@ export function ProfileHeader({ profile, onProfileUpdated }: ProfileHeaderProps)
               Cancel
             </button>
           </div>
-          {message && <p className="mt-2 text-sm text-zinc-300">{message}</p>}
+          {message && <p className="mt-2 font-mono text-xs text-zinc-600">{message}</p>}
         </div>
       )}
     </header>

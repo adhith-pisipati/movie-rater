@@ -385,7 +385,11 @@ export default function HomePage() {
   const detailSession = detailMovieId ? state.sessions[detailMovieId] : null;
 
   if (loading) {
-    return <main className="mx-auto max-w-6xl p-6 text-zinc-300">Loading dashboard...</main>;
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="font-mono text-xs tracking-[0.2em] uppercase text-zinc-700">Loading…</p>
+      </main>
+    );
   }
 
   if (!session || !user) {
@@ -393,25 +397,40 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-6xl p-4 sm:p-6">
+    <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 sm:px-8">
       <ProfileHeader profile={profile} onProfileUpdated={() => loadDashboard(user)} />
-      {error && <p className="mb-3 rounded border border-red-400/40 bg-red-500/10 p-2 text-sm text-red-200">{error}</p>}
+      {error && (
+        <p className="mb-6 rounded border border-red-400/30 bg-red-500/5 px-3 py-2 font-mono text-xs text-red-400">
+          {error}
+        </p>
+      )}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <button className="btn" onClick={handleExport}>
-          Export CSV (Excel-friendly)
+      {/* Navigation */}
+      <nav className="mb-8 flex items-center justify-between border-b border-line pb-0">
+        <div className="flex gap-6">
+          {(["movies", "rankings", "import", "friends"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              className={`pb-3 font-sans text-sm transition-colors duration-150 ${
+                tab === t
+                  ? "border-b-2 border-accent text-zinc-100"
+                  : "border-b-2 border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+              onClick={() => setTab(t)}
+            >
+              {t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+        <button className="btn mb-3 text-xs" onClick={handleExport}>
+          Export CSV
         </button>
-        {(["movies", "rankings", "import", "friends"] as Tab[]).map((t) => (
-          <button key={t} className={tab === t ? "btn-primary" : "btn"} onClick={() => setTab(t)}>
-            {t[0].toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
+      </nav>
 
       {tab === "movies" && (
         <section className="space-y-3">
           {unratedMovies.length === 0 && (
-            <article className="surface p-4 text-sm text-zinc-400">All movies are rated. Add more in Import.</article>
+            <p className="font-mono text-xs text-zinc-700">All movies are rated. Add more in Import.</p>
           )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {unratedMovies.map((movie) => (

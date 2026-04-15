@@ -24,21 +24,26 @@ export function ImportPanel({ onImport }: ImportPanelProps) {
   }
 
   return (
-    <section className="surface p-4">
-      <h2 className="mb-2 text-lg font-semibold">Import Movies</h2>
-      <p className="mb-2 text-sm text-zinc-400">Paste one title per line or a JSON array of strings.</p>
+    <section className="surface p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <h2 className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-500">Import Movies</h2>
+        <div className="h-px flex-1 bg-line" />
+      </div>
+      <p className="mb-4 text-sm text-zinc-500">
+        Paste one title per line, or a JSON array of strings.
+      </p>
       <textarea
-        className="h-48 w-full rounded-lg border border-line bg-zinc-900 p-3 text-sm outline-none focus:border-accent"
+        className="h-48 w-full rounded border border-line bg-transparent p-3 text-sm text-zinc-200 outline-none transition-colors placeholder:text-zinc-700 focus:border-accent/60 resize-none"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder='["Movie A", "Movie B"]'
+        placeholder={`The Godfather\nChinatown\nTaxi Driver`}
       />
-      <div className="mt-3">
+      <div className="mt-4 flex items-center gap-3">
         <button className="btn-primary" onClick={submit} disabled={busy}>
-          {busy ? "Importing..." : "Parse and Add Movies"}
+          {busy ? "Importing…" : "Add to catalog"}
         </button>
+        {message && <p className="font-mono text-xs text-zinc-600">{message}</p>}
       </div>
-      {message && <p className="mt-2 text-sm text-zinc-300">{message}</p>}
     </section>
   );
 }

@@ -39,16 +39,24 @@ export function RemovePopover({ triggerClassName, triggerLabel, onRemove, onRemo
     <div ref={ref} className="relative">
       <button
         aria-label={triggerLabel ?? "Remove"}
-        className={triggerClassName ?? "rounded px-2 py-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={
+          triggerClassName ??
+          "flex h-6 w-6 items-center justify-center rounded text-zinc-600 transition-colors hover:bg-zinc-800/60 hover:text-zinc-300"
+        }
         onClick={() => setOpen((o) => !o)}
       >
-        X
+        ×
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full z-10 mt-1 w-44 rounded border border-line bg-zinc-900 shadow-lg">
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-10 mt-1 w-44 overflow-hidden rounded border border-line bg-cardBg shadow-xl shadow-black/40"
+        >
           <button
             role="menuitem"
-            className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-800"
+            className="w-full px-3 py-2 text-left font-sans text-sm text-zinc-300 transition-colors hover:bg-zinc-800/60"
             onClick={() => {
               setOpen(false);
               onRemove();
@@ -59,7 +67,7 @@ export function RemovePopover({ triggerClassName, triggerLabel, onRemove, onRemo
           {onRemoveGlobally && (
             <button
               role="menuitem"
-              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-zinc-800"
+              className="w-full px-3 py-2 text-left font-sans text-sm text-red-400 transition-colors hover:bg-zinc-800/60"
               onClick={() => {
                 setOpen(false);
                 onRemoveGlobally();
