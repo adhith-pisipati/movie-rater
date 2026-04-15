@@ -11,7 +11,7 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, bucketLabel, onRate, onRemove, currentUserId, onRemoveGlobally }: MovieCardProps) {
-  const canRemoveGlobally = movie.createdBy && currentUserId && movie.createdBy === currentUserId;
+  const canRemoveGlobally = !!movie.createdBy && !!currentUserId && movie.createdBy === currentUserId;
 
   return (
     <article className="surface relative p-4">

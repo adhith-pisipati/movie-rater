@@ -35,7 +35,7 @@ export function RankingsView({
               const rank = rankedById.get(movieId);
               if (!movie || !rank) return null;
               const canRemoveGlobally =
-                movie.createdBy && currentUserId && movie.createdBy === currentUserId;
+                !!movie.createdBy && !!currentUserId && movie.createdBy === currentUserId;
               return (
                 <li key={movieId} className="flex items-center justify-between rounded-lg border border-line p-3">
                   <div>
