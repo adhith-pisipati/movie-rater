@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { AuthForm } from "@/components/AuthForm";
 import { FriendsPanel } from "@/components/FriendsPanel";
@@ -141,6 +141,8 @@ export default function HomePage() {
     () => friendships.friends.map((f) => f.friendProfile.id),
     [friendships.friends]
   );
+
+  const handleScoreCardClose = useCallback(() => setScoreCardMovieId(null), []);
 
   const unratedMovies = useMemo(() => {
     const pending = state.movies.filter((movie) => !rankedById.has(movie.id));
@@ -528,7 +530,7 @@ export default function HomePage() {
             setScoreCardMovieId(null);
             startRating(scoreCardMovieId);
           }}
-          onClose={() => setScoreCardMovieId(null)}
+          onClose={handleScoreCardClose}
         />
       )}
     </main>
