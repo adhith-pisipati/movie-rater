@@ -1,5 +1,6 @@
 import { BUCKETS } from "@/lib/ranking";
 import { Movie, RankedMovie, RatingBucket } from "@/lib/types";
+import { RemovePopover } from "@/components/RemovePopover";
 
 const bucketLabel: Record<RatingBucket, string> = { good: "Good", okay: "Okay", bad: "Bad" };
 
@@ -9,9 +10,19 @@ interface RankingsViewProps {
   rankedById: Map<string, RankedMovie>;
   onInspectMovie?: (movieId: string) => void;
   onRemoveMovie?: (movieId: string) => void;
+  onRemoveMovieGlobally?: (movieId: string) => void;
+  currentUserId?: string;
 }
 
-export function RankingsView({ rankings, movieById, rankedById, onInspectMovie, onRemoveMovie }: RankingsViewProps) {
+export function RankingsView({
+  rankings,
+  movieById,
+  rankedById,
+  onInspectMovie,
+  onRemoveMovie,
+  onRemoveMovieGlobally,
+  currentUserId
+}: RankingsViewProps) {
   return (
     <section className="space-y-4">
       {BUCKETS.map((bucket) => (
@@ -23,6 +34,8 @@ export function RankingsView({ rankings, movieById, rankedById, onInspectMovie, 
               const movie = movieById.get(movieId);
               const rank = rankedById.get(movieId);
               if (!movie || !rank) return null;
+              const canRemoveGlobally =
+                movie.createdBy && currentUserId && movie.createdBy === currentUserId;
               return (
                 <li key={movieId} className="flex items-center justify-between rounded-lg border border-line p-3">
                   <div>
@@ -39,9 +52,16 @@ export function RankingsView({ rankings, movieById, rankedById, onInspectMovie, 
                       </button>
                     )}
                     {onRemoveMovie && (
-                      <button className="btn" onClick={() => onRemoveMovie(movieId)}>
-                        X
-                      </button>
+                      <RemovePopover
+                        triggerClassName="btn"
+                        triggerLabel={`Remove ${movie.title}`}
+                        onRemove={() => onRemoveMovie(movieId)}
+                        onRemoveGlobally={
+                          canRemoveGlobally && onRemoveMovieGlobally
+                            ? () => onRemoveMovieGlobally(movieId)
+                            : undefined
+                        }
+                      />
                     )}
                   </div>
                 </li>
