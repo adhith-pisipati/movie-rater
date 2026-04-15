@@ -40,7 +40,7 @@ export async function importMoviesByTitles(titles: string[]): Promise<void> {
       .select("normalized_title")
       .in("normalized_title", slice);
     if (selectError) throw selectError;
-    (existing ?? []).forEach((row) => existingSet.add(row.normalized_title));
+    (existing ?? []).forEach((row: { normalized_title: string }) => existingSet.add(row.normalized_title));
   }
 
   const toInsert = cleaned
