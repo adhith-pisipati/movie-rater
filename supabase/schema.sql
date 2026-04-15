@@ -189,6 +189,11 @@ create policy movies_insert_authenticated on public.movies
 for insert to authenticated
 with check (true);
 
+drop policy if exists movies_delete_creator on public.movies;
+create policy movies_delete_creator on public.movies
+for delete to authenticated
+using (auth.uid() = created_by);
+
 -- Ratings: authenticated users can read rankings; users write only their own rows.
 drop policy if exists ratings_select_authenticated on public.ratings;
 create policy ratings_select_authenticated on public.ratings

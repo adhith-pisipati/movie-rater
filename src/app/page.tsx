@@ -328,6 +328,9 @@ export default function HomePage() {
         ratedAtByMovie: Object.fromEntries(Object.entries(prev.ratedAtByMovie).filter(([id]) => id !== movieId)),
         haventWatchedAtByMovie: Object.fromEntries(
           Object.entries(prev.haventWatchedAtByMovie).filter(([id]) => id !== movieId)
+        ),
+        removedAtByMovie: Object.fromEntries(
+          Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId)
         )
       };
       persistState(nextState);
