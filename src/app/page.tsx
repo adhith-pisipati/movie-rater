@@ -301,6 +301,7 @@ export default function HomePage() {
   function removeMovieForCurrentUser(movieId: string) {
     if (activeRating?.movieId === movieId) setActiveRating(null);
     if (detailMovieId === movieId) setDetailMovieId(null);
+    if (scoreCardMovieId === movieId) setScoreCardMovieId(null);
 
     setState((prev) => {
       const nextState: AppState = {
@@ -321,6 +322,7 @@ export default function HomePage() {
   async function handleRemoveMovieGlobally(movieId: string) {
     if (activeRating?.movieId === movieId) setActiveRating(null);
     if (detailMovieId === movieId) setDetailMovieId(null);
+    if (scoreCardMovieId === movieId) setScoreCardMovieId(null);
     try {
       await deleteMovieGlobally(movieId);
     } catch (err) {
