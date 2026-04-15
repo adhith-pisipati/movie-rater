@@ -313,7 +313,12 @@ export default function HomePage() {
   async function handleRemoveMovieGlobally(movieId: string) {
     if (activeRating?.movieId === movieId) setActiveRating(null);
     if (detailMovieId === movieId) setDetailMovieId(null);
-    await deleteMovieGlobally(movieId);
+    try {
+      await deleteMovieGlobally(movieId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove movie globally");
+      return;
+    }
     setState((prev) => {
       const nextState: AppState = {
         ...prev,
