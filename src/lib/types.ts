@@ -5,6 +5,7 @@ export interface Movie {
   title: string;
   year?: number;
   createdAt: string;
+  createdBy?: string;
 }
 
 export type ComparisonChoice = "new" | "existing" | "skip";

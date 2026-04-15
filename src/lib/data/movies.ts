@@ -21,7 +21,8 @@ export async function fetchMovies(): Promise<Movie[]> {
     id: row.id,
     title: row.title,
     year: row.year ?? undefined,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    createdBy: row.created_by ?? undefined
   }));
 }
 

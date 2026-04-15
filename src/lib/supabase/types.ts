@@ -14,6 +14,7 @@ export interface MovieRow {
   year: number | null;
   normalized_title: string;
   created_at: string;
+  created_by: string | null;
 }
 
 export interface RatingRow {
