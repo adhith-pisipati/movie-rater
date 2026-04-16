@@ -12,7 +12,12 @@ import { ProfileHeader } from "@/components/ProfileHeader";
 import { RankingsView } from "@/components/RankingsView";
 import { RatingModal } from "@/components/RatingModal";
 import { fetchFriendships, sendFriendRequest, updateFriendRequestStatus } from "@/lib/data/friendships";
-import { deleteMovieGlobally, ensureGlobalMovieCatalogSeeded, fetchMovies, importMoviesByTitles } from "@/lib/data/movies";
+import {
+  deleteMovieGlobally,
+  ensureGlobalMovieCatalogSeeded,
+  fetchMovies,
+  verifyAndImportMoviesByTitles
+} from "@/lib/data/movies";
 import { fetchMyProfile, searchProfiles } from "@/lib/data/profiles";
 import { loadUserRatingState, persistFullUserRatingState } from "@/lib/data/ratings";
 import {
@@ -304,10 +309,11 @@ export default function HomePage() {
   }
 
   async function handleImport(raw: string) {
-    await importMoviesByTitles(parseImport(raw), user?.id);
+    const summary = await verifyAndImportMoviesByTitles(parseImport(raw), user?.id);
     const movies = await fetchMovies();
     setState((prev) => ({ ...prev, movies }));
     setTab("movies");
+    return summary;
   }
 
   function removeMovieForCurrentUser(movieId: string) {
@@ -531,6 +537,7 @@ export default function HomePage() {
           onClose={handleOverlayClose}
         />
       )}
+
     </main>
   );
 }

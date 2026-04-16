@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { VerifiedImportSummary } from "@/lib/data/movies";
 
 interface ImportPanelProps {
-  onImport: (raw: string) => Promise<void>;
+  onImport: (raw: string) => Promise<VerifiedImportSummary>;
 }
 
 export function ImportPanel({ onImport }: ImportPanelProps) {
@@ -13,9 +14,13 @@ export function ImportPanel({ onImport }: ImportPanelProps) {
     setBusy(true);
     setMessage(null);
     try {
-      await onImport(input);
+      const summary = await onImport(input);
       setInput("");
-      setMessage("Movies imported.");
+      const skipped =
+        summary.skippedNotFound.length > 0 ? ` Skipped not found: ${summary.skippedNotFound.slice(0, 5).join(", ")}.` : "";
+      setMessage(
+        `Submitted ${summary.submitted}. Verified ${summary.verified}. Added ${summary.inserted}.${skipped}`
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Import failed");
     } finally {

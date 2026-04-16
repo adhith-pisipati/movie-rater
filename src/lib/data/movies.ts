@@ -14,6 +14,13 @@ function chunk<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
+export interface VerifiedImportSummary {
+  submitted: number;
+  verified: number;
+  inserted: number;
+  skippedNotFound: string[];
+}
+
 export async function fetchMovies(): Promise<Movie[]> {
   const { data, error } = await supabase.from("movies").select("*").order("title");
   if (error) throw error;
@@ -57,6 +64,53 @@ export async function importMoviesByTitles(titles: string[], userId?: string): P
     const { error: insertError } = await supabase.from("movies").insert(slice);
     if (insertError) throw insertError;
   }
+}
+
+export async function verifyAndImportMoviesByTitles(
+  titles: string[],
+  userId?: string
+): Promise<VerifiedImportSummary> {
+  const cleaned = Array.from(new Set(titles.map((t) => t.trim()).filter(Boolean)));
+  if (cleaned.length === 0) {
+    return { submitted: 0, verified: 0, inserted: 0, skippedNotFound: [] };
+  }
+
+  const verifiedTitles: string[] = [];
+  const skippedNotFound: string[] = [];
+
+  for (const title of cleaned) {
+    const res = await fetch(`/api/omdb?title=${encodeURIComponent(title)}`);
+    const body = (await res.json().catch(() => null)) as
+      | { ok?: boolean; reason?: string; data?: Record<string, string> }
+      | null;
+
+    if (!res.ok) {
+      const reason = body?.reason ?? "request_failed";
+      if (reason === "missing_key" || reason === "invalid_key" || reason === "rate_limited") {
+        throw new Error(`Movie verification failed: ${reason}.`);
+      }
+      throw new Error("Movie verification service unavailable. Please try again.");
+    }
+
+    if (!body?.ok || !body.data) {
+      skippedNotFound.push(title);
+      continue;
+    }
+
+    const canonicalTitle = (body.data["Title"] ?? title).trim();
+    if (canonicalTitle) verifiedTitles.push(canonicalTitle);
+  }
+
+  const beforeCount = (await fetchMovies()).length;
+  await importMoviesByTitles(verifiedTitles, userId);
+  const afterCount = (await fetchMovies()).length;
+
+  return {
+    submitted: cleaned.length,
+    verified: verifiedTitles.length,
+    inserted: Math.max(0, afterCount - beforeCount),
+    skippedNotFound
+  };
 }
 
 export async function ensureGlobalMovieCatalogSeeded(): Promise<void> {
