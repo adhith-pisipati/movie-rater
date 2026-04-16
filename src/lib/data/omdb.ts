@@ -9,7 +9,13 @@ export interface OmdbData {
   imdbRating: string;
 }
 
-export type OmdbFailureReason = "missing_key" | "missing_title" | "not_found" | "request_failed";
+export type OmdbFailureReason =
+  | "missing_key"
+  | "invalid_key"
+  | "rate_limited"
+  | "missing_title"
+  | "not_found"
+  | "request_failed";
 
 export async function fetchOmdbData(
   title: string

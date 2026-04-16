@@ -19,7 +19,8 @@ async function fetchJson(url: string): Promise<OmdbRaw> {
 }
 
 export async function GET(req: Request) {
-  const apiKey = process.env.OMDB_API_KEY;
+  // Prefer server-only key, but support NEXT_PUBLIC_OMDB_API_KEY for local dev compatibility.
+  const apiKey = process.env.OMDB_API_KEY ?? process.env.NEXT_PUBLIC_OMDB_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ ok: false, reason: "missing_key" }, { status: 500 });
   }
@@ -36,6 +37,12 @@ export async function GET(req: Request) {
   // Attempt 1: exact title lookup
   const exactUrl = `${base}?t=${encodeURIComponent(title)}&plot=full&apikey=${apiKey}`;
   const exact = await fetchJson(exactUrl);
+  if ((exact["Error"] ?? "").toLowerCase().includes("invalid api key")) {
+    return NextResponse.json({ ok: false, reason: "invalid_key" }, { status: 500 });
+  }
+  if ((exact["Error"] ?? "").toLowerCase().includes("request limit")) {
+    return NextResponse.json({ ok: false, reason: "rate_limited" }, { status: 429 });
+  }
   if (exact["Response"] !== "False") {
     return NextResponse.json({ ok: true, data: exact });
   }

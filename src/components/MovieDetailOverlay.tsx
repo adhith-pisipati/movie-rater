@@ -153,6 +153,10 @@ export function MovieDetailOverlay({
                 <p className="mt-3 font-mono text-xs text-zinc-700">
                   {omdbError?.reason === "missing_key"
                     ? "OMDb is not configured (missing OMDB_API_KEY)."
+                    : omdbError?.reason === "invalid_key"
+                      ? "OMDb API key is invalid."
+                      : omdbError?.reason === "rate_limited"
+                        ? "OMDb rate limit reached. Try again later."
                     : omdbError?.reason === "request_failed"
                       ? "Could not reach OMDb right now."
                       : "No details found."}
