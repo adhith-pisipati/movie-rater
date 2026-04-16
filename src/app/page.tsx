@@ -314,8 +314,14 @@ export default function HomePage() {
     const res = await fetch(`/api/omdb?title=${encodeURIComponent(title)}`);
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { reason?: string } | null;
-      const reason = body?.reason ?? "request_failed";
-      throw new Error(`Movie verification failed: ${reason}`);
+      const reason = body?.reason;
+      if (reason === "missing_key" || reason === "invalid_key") {
+        throw new Error("OMDB API key is missing or invalid — check .env.local");
+      }
+      if (reason === "rate_limited") {
+        throw new Error("Verification service is rate limited — try again shortly");
+      }
+      throw new Error("Verification service unavailable — please try again");
     }
     const body = (await res.json()) as { ok: boolean; data?: Record<string, string> };
     if (!body.ok || !body.data) {
