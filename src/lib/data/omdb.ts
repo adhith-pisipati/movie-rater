@@ -11,7 +11,12 @@ export interface OmdbData {
 
 export async function fetchOmdbData(title: string): Promise<OmdbData | null> {
   const apiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[fetchOmdbData] NEXT_PUBLIC_OMDB_API_KEY is not set — add it to .env.local");
+    }
+    return null;
+  }
 
   const url = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&plot=full&apikey=${apiKey}`;
 
