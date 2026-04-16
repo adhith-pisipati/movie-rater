@@ -16,7 +16,7 @@ import {
   deleteMovieGlobally,
   ensureGlobalMovieCatalogSeeded,
   fetchMovies,
-  verifyAndImportMoviesByTitles
+  importMoviesByTitles
 } from "@/lib/data/movies";
 import { fetchMyProfile, searchProfiles } from "@/lib/data/profiles";
 import { loadUserRatingState, persistFullUserRatingState } from "@/lib/data/ratings";
@@ -29,7 +29,7 @@ import {
   removeMovieFromRankings,
   updateBoundsForChoice
 } from "@/lib/ranking";
-import { createInitialState, exportRankingsCsv, parseImport } from "@/lib/storage";
+import { createInitialState, exportRankingsCsv } from "@/lib/storage";
 import { supabase } from "@/lib/supabase/client";
 import { FriendshipViewData } from "@/lib/data/friendships";
 import { ProfileRow } from "@/lib/supabase/types";
@@ -308,12 +308,30 @@ export default function HomePage() {
     setActiveRating(null);
   }
 
-  async function handleImport(raw: string) {
-    const summary = await verifyAndImportMoviesByTitles(parseImport(raw), user?.id);
+  async function handleVerifyMovie(
+    title: string
+  ): Promise<{ ok: boolean; canonicalTitle?: string }> {
+    const res = await fetch(`/api/omdb?title=${encodeURIComponent(title)}`);
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { reason?: string } | null;
+      const reason = body?.reason ?? "request_failed";
+      throw new Error(`Movie verification failed: ${reason}`);
+    }
+    const body = (await res.json()) as { ok: boolean; data?: Record<string, string> };
+    if (!body.ok || !body.data) {
+      return { ok: false };
+    }
+    return {
+      ok: true,
+      canonicalTitle: (body.data["Title"] ?? title).trim()
+    };
+  }
+
+  async function handleAddMovie(canonicalTitle: string): Promise<void> {
+    await importMoviesByTitles([canonicalTitle], user?.id);
     const movies = await fetchMovies();
     setState((prev) => ({ ...prev, movies }));
     setTab("movies");
-    return summary;
   }
 
   function removeMovieForCurrentUser(movieId: string) {
@@ -494,7 +512,7 @@ export default function HomePage() {
           currentUserId={user?.id}
         />
       )}
-      {tab === "import" && <ImportPanel onImport={handleImport} />}
+      {tab === "import" && <ImportPanel onVerify={handleVerifyMovie} onAdd={handleAddMovie} />}
       {tab === "friends" && (
         <FriendsPanel
           friendships={friendships}
