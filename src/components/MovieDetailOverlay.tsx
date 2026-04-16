@@ -68,6 +68,12 @@ export function MovieDetailOverlay({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  // Lock body scroll while overlay is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   function fmtScore(value: ScoreState): string {
     if (value === "loading") return "…";
     if (value === null) return "—";
@@ -81,7 +87,7 @@ export function MovieDetailOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={movie.title}
+      aria-labelledby="overlay-title"
       className="fixed inset-0 z-20 overflow-y-auto bg-black/80 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -122,7 +128,7 @@ export function MovieDetailOverlay({
                 </p>
               )}
 
-              <h2 className="mt-1 font-display text-2xl font-light italic leading-tight text-zinc-100">
+              <h2 id="overlay-title" className="mt-1 font-display text-2xl font-light italic leading-tight text-zinc-100">
                 {movie.title}
               </h2>
 

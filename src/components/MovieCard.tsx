@@ -24,7 +24,7 @@ export function MovieCard({
 
   return (
     <article
-      className="surface group relative flex cursor-pointer flex-col justify-between p-4 transition-colors duration-150 hover:border-line/70"
+      className={`surface group relative flex flex-col justify-between p-4 transition-colors duration-150 hover:border-line/70 ${onViewDetails ? "cursor-pointer" : ""}`}
       onClick={onViewDetails}
     >
       <div

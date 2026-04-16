@@ -508,8 +508,9 @@ export default function HomePage() {
           movieById={movieById}
           friendIds={friendIds}
           onRate={() => {
+            const id = overlayMovieId;
             setOverlayMovieId(null);
-            startRating(overlayMovieId);
+            startRating(id);
           }}
           onClose={handleOverlayClose}
         />
