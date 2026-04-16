@@ -113,7 +113,7 @@ export function ImportPanel({ onVerify, onAdd }: ImportPanelProps) {
       </div>
 
       {/* Status area */}
-      <div className="mt-3 min-h-[1.5rem]">
+      <div className="mt-3 min-h-[1.5rem]" aria-live="polite" aria-atomic="true">
         {verifyState.type === "added" && (
           <p className="font-mono text-xs text-good">✓ {verifyState.canonicalTitle} added</p>
         )}
