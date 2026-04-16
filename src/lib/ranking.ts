@@ -53,7 +53,7 @@ export function removeMovieFromRankings(rankings: AppState["rankings"], movieId:
   };
 }
 
-function scoreByBucketPosition(bucket: RatingBucket, rankInBucket: number, bucketCount: number): number {
+export function scoreByBucketPosition(bucket: RatingBucket, rankInBucket: number, bucketCount: number): number {
   // This is an adjustable display approximation inspired by comparative-ranking apps.
   // It is intentionally not a claim of Beli's proprietary internal scoring formula.
   const { min, max } = BUCKET_SCORE_RANGES[bucket];

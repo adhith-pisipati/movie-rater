@@ -80,6 +80,18 @@ export default function HomePage() {
         haventWatchedAtByMovie: userRatings.haventWatchedAtByMovie,
         removedAtByMovie: userRatings.removedAtByMovie
       });
+
+      // Normalize persisted ranks/scores after any cascade changes (e.g. global deletes).
+      // This ensures the DB-stored `ratings.score` stays consistent with current ranks.
+      void persistFullUserRatingState(currentUser.id, {
+        movies,
+        rankings: userRatings.rankings,
+        sessions: userRatings.sessions,
+        ratedAtByMovie: userRatings.ratedAtByMovie,
+        haventWatchedAtByMovie: userRatings.haventWatchedAtByMovie,
+        removedAtByMovie: userRatings.removedAtByMovie
+      }).catch(() => {});
+
       setProfile(myProfile);
       setFriendships(social);
     } catch (err) {
@@ -327,19 +339,23 @@ export default function HomePage() {
       setError(err instanceof Error ? err.message : "Failed to remove movie globally");
       return;
     }
+    let freshMovies: Movie[] | null = null;
+    try {
+      freshMovies = await fetchMovies();
+    } catch {
+      // If fetch fails, we'll still update local state optimistically.
+    }
     setState((prev) => {
       const nextState: AppState = {
         ...prev,
-        movies: prev.movies.filter((m) => m.id !== movieId),
+        movies: freshMovies ?? prev.movies.filter((m) => m.id !== movieId),
         rankings: removeMovieFromRankings(prev.rankings, movieId),
         sessions: Object.fromEntries(Object.entries(prev.sessions).filter(([id]) => id !== movieId)),
         ratedAtByMovie: Object.fromEntries(Object.entries(prev.ratedAtByMovie).filter(([id]) => id !== movieId)),
         haventWatchedAtByMovie: Object.fromEntries(
           Object.entries(prev.haventWatchedAtByMovie).filter(([id]) => id !== movieId)
         ),
-        removedAtByMovie: Object.fromEntries(
-          Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId)
-        )
+        removedAtByMovie: Object.fromEntries(Object.entries(prev.removedAtByMovie).filter(([id]) => id !== movieId))
       };
       persistState(nextState);
       return nextState;

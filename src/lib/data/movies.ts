@@ -66,6 +66,9 @@ export async function ensureGlobalMovieCatalogSeeded(): Promise<void> {
 }
 
 export async function deleteMovieGlobally(movieId: string): Promise<void> {
-  const { error } = await supabase.from("movies").delete().eq("id", movieId);
+  const { data, error } = await supabase.from("movies").delete().eq("id", movieId).select("id");
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Movie could not be deleted (not found or permission denied).");
+  }
 }

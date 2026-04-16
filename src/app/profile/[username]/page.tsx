@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { fetchProfileByUsername } from "@/lib/data/profiles";
 import { loadPublicRankings } from "@/lib/data/ratings";
+import { scoreByBucketPosition } from "@/lib/ranking";
 import { ProfileRow } from "@/lib/supabase/types";
 
 type Bucket = "good" | "okay" | "bad";
@@ -55,6 +56,14 @@ export default function PublicProfilePage({ params }: { params: { username: stri
     });
     return initial;
   }, [ratings]);
+
+  const bucketCounts = useMemo(() => {
+    return {
+      good: grouped.good.length,
+      okay: grouped.okay.length,
+      bad: grouped.bad.length
+    };
+  }, [grouped]);
 
   if (loading) {
     return (
@@ -113,7 +122,9 @@ export default function PublicProfilePage({ params }: { params: { username: stri
                     <span className="flex-1 font-display text-base text-zinc-100">
                       {rating.movies?.title ?? "Unknown"}
                     </span>
-                    <span className="font-mono text-xs text-zinc-600">{rating.score.toFixed(1)}</span>
+                    <span className="font-mono text-xs text-zinc-600">
+                      {scoreByBucketPosition(rating.bucket, rating.rank_in_bucket, bucketCounts[rating.bucket]).toFixed(1)}
+                    </span>
                   </li>
                 ))}
             </ol>
