@@ -9,36 +9,36 @@ export interface OmdbData {
   imdbRating: string;
 }
 
-export async function fetchOmdbData(title: string): Promise<OmdbData | null> {
-  const apiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY;
-  console.log("[OMDB] key present:", !!apiKey, "title:", title);
-  if (!apiKey) {
-    console.warn("[fetchOmdbData] NEXT_PUBLIC_OMDB_API_KEY is not set — add it to .env.local");
-    return null;
-  }
+export type OmdbFailureReason = "missing_key" | "missing_title" | "not_found" | "request_failed";
 
-  const url = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}&plot=full&apikey=${apiKey}`;
-  console.log("[OMDB] fetching:", url);
-
+export async function fetchOmdbData(
+  title: string
+): Promise<{ data: OmdbData | null; reason?: OmdbFailureReason }> {
   try {
-    const res = await fetch(url);
-    console.log("[OMDB] status:", res.status, res.ok);
-    if (!res.ok) return null;
-    const data = await res.json() as Record<string, string>;
-    console.log("[OMDB response]", data);
-    if (data["Response"] === "False") return null;
+    const res = await fetch(`/api/omdb?title=${encodeURIComponent(title)}`);
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { reason?: OmdbFailureReason } | null;
+      return { data: null, reason: body?.reason ?? "request_failed" };
+    }
+    const body = (await res.json()) as { ok: boolean; data?: Record<string, string>; reason?: OmdbFailureReason };
+    if (!body.ok || !body.data) {
+      return { data: null, reason: body.reason ?? "not_found" };
+    }
 
+    const data = body.data;
     return {
-      title: data["Title"] ?? title,
-      year: data["Year"] ?? "",
-      plot: data["Plot"] ?? "",
-      poster: data["Poster"] && data["Poster"] !== "N/A" ? data["Poster"] : null,
-      director: data["Director"] ?? "",
-      actors: data["Actors"] ?? "",
-      genre: data["Genre"] ?? "",
-      imdbRating: data["imdbRating"] ?? "N/A"
+      data: {
+        title: data["Title"] ?? title,
+        year: data["Year"] ?? "",
+        plot: data["Plot"] ?? "",
+        poster: data["Poster"] && data["Poster"] !== "N/A" ? data["Poster"] : null,
+        director: data["Director"] ?? "",
+        actors: data["Actors"] ?? "",
+        genre: data["Genre"] ?? "",
+        imdbRating: data["imdbRating"] ?? "N/A"
+      }
     };
   } catch {
-    return null;
+    return { data: null, reason: "request_failed" };
   }
 }

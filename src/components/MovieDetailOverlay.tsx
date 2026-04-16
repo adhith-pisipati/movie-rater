@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { Movie, RankedMovie, ComparisonSession, RatingBucket } from "@/lib/types";
 import { fetchCrowdScore, fetchFriendsScore } from "@/lib/data/ratings";
-import { fetchOmdbData, OmdbData } from "@/lib/data/omdb";
+import { fetchOmdbData, OmdbData, OmdbFailureReason } from "@/lib/data/omdb";
 
 const bucketLabel: Record<RatingBucket, string> = { good: "Good", okay: "Okay", bad: "Bad" };
 
 type ScoreState = number | null | "loading";
 type OmdbState = OmdbData | null | "loading";
+type OmdbErrorState = { reason: OmdbFailureReason } | null;
 
 interface MovieDetailOverlayProps {
   movie: Movie;
@@ -32,6 +33,7 @@ export function MovieDetailOverlay({
   const [crowdScore, setCrowdScore] = useState<ScoreState>("loading");
   const [friendsScore, setFriendsScore] = useState<ScoreState>("loading");
   const [omdbData, setOmdbData] = useState<OmdbState>("loading");
+  const [omdbError, setOmdbError] = useState<OmdbErrorState>(null);
   const [showHistory, setShowHistory] = useState(false);
 
   // Serialize friendIds to avoid re-firing when parent re-renders with a new array reference
@@ -42,6 +44,7 @@ export function MovieDetailOverlay({
     setCrowdScore("loading");
     setFriendsScore("loading");
     setOmdbData("loading");
+    setOmdbError(null);
     setShowHistory(false);
 
     fetchCrowdScore(movie.id)
@@ -53,7 +56,11 @@ export function MovieDetailOverlay({
       .catch(() => { if (!cancelled) setFriendsScore(null); });
 
     fetchOmdbData(movie.title)
-      .then((v) => { if (!cancelled) setOmdbData(v); })
+      .then(({ data, reason }) => {
+        if (cancelled) return;
+        setOmdbData(data);
+        setOmdbError(data ? null : reason ? { reason } : null);
+      })
       .catch(() => { if (!cancelled) setOmdbData(null); });
 
     return () => { cancelled = true; };
@@ -143,7 +150,13 @@ export function MovieDetailOverlay({
               )}
 
               {omdbData === null && (
-                <p className="mt-3 font-mono text-xs text-zinc-700">No details found.</p>
+                <p className="mt-3 font-mono text-xs text-zinc-700">
+                  {omdbError?.reason === "missing_key"
+                    ? "OMDb is not configured (missing OMDB_API_KEY)."
+                    : omdbError?.reason === "request_failed"
+                      ? "Could not reach OMDb right now."
+                      : "No details found."}
+                </p>
               )}
 
               {omdb?.plot && (
