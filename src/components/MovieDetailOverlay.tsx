@@ -34,11 +34,15 @@ export function MovieDetailOverlay({
   const [omdbData, setOmdbData] = useState<OmdbState>("loading");
   const [showHistory, setShowHistory] = useState(false);
 
+  // Serialize friendIds to avoid re-firing when parent re-renders with a new array reference
+  const friendIdsKey = friendIds.join(",");
+
   useEffect(() => {
     let cancelled = false;
     setCrowdScore("loading");
     setFriendsScore("loading");
     setOmdbData("loading");
+    setShowHistory(false);
 
     fetchCrowdScore(movie.id)
       .then((v) => { if (!cancelled) setCrowdScore(v); })
@@ -53,7 +57,8 @@ export function MovieDetailOverlay({
       .catch(() => { if (!cancelled) setOmdbData(null); });
 
     return () => { cancelled = true; };
-  }, [movie.id, movie.title, friendIds]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movie.id, movie.title, friendIdsKey]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
