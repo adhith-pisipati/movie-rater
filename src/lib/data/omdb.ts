@@ -24,6 +24,7 @@ export async function fetchOmdbData(title: string): Promise<OmdbData | null> {
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json() as Record<string, string>;
+    console.log("[OMDB response]", data);
     if (data["Response"] === "False") return null;
 
     return {
