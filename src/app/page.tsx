@@ -6,8 +6,7 @@ import { AuthForm } from "@/components/AuthForm";
 import { FriendsPanel } from "@/components/FriendsPanel";
 import { ImportPanel } from "@/components/ImportPanel";
 import { MovieCard } from "@/components/MovieCard";
-import { MovieDetailDrawer } from "@/components/MovieDetailDrawer";
-import { MovieScoreCard } from "@/components/MovieScoreCard";
+import { MovieDetailOverlay } from "@/components/MovieDetailOverlay";
 import { MovieSearchBar } from "@/components/MovieSearchBar";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { RankingsView } from "@/components/RankingsView";
@@ -52,8 +51,7 @@ export default function HomePage() {
   const [state, setState] = useState<AppState>(createInitialState());
   const [tab, setTab] = useState<Tab>("movies");
   const [activeRating, setActiveRating] = useState<ActiveRating | null>(null);
-  const [detailMovieId, setDetailMovieId] = useState<string | null>(null);
-  const [scoreCardMovieId, setScoreCardMovieId] = useState<string | null>(null);
+  const [overlayMovieId, setOverlayMovieId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,7 +140,7 @@ export default function HomePage() {
     [friendships.friends]
   );
 
-  const handleScoreCardClose = useCallback(() => setScoreCardMovieId(null), []);
+  const handleOverlayClose = useCallback(() => setOverlayMovieId(null), []);
 
   const unratedMovies = useMemo(() => {
     const pending = state.movies.filter((movie) => !rankedById.has(movie.id));
@@ -302,8 +300,7 @@ export default function HomePage() {
 
   function removeMovieForCurrentUser(movieId: string) {
     if (activeRating?.movieId === movieId) setActiveRating(null);
-    if (detailMovieId === movieId) setDetailMovieId(null);
-    if (scoreCardMovieId === movieId) setScoreCardMovieId(null);
+    if (overlayMovieId === movieId) setOverlayMovieId(null);
 
     setState((prev) => {
       const nextState: AppState = {
@@ -323,8 +320,7 @@ export default function HomePage() {
 
   async function handleRemoveMovieGlobally(movieId: string) {
     if (activeRating?.movieId === movieId) setActiveRating(null);
-    if (detailMovieId === movieId) setDetailMovieId(null);
-    if (scoreCardMovieId === movieId) setScoreCardMovieId(null);
+    if (overlayMovieId === movieId) setOverlayMovieId(null);
     try {
       await deleteMovieGlobally(movieId);
     } catch (err) {
@@ -392,10 +388,6 @@ export default function HomePage() {
   const comparisonMovie = activeStep ? movieById.get(comparisonBucketIds[activeStep.mid]) ?? null : null;
   const activeMovie = activeRating ? movieById.get(activeRating.movieId) ?? null : null;
 
-  const detailMovie = detailMovieId ? movieById.get(detailMovieId) : null;
-  const detailRanking = detailMovieId ? rankedById.get(detailMovieId) : null;
-  const detailSession = detailMovieId ? state.sessions[detailMovieId] : null;
-
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -422,7 +414,7 @@ export default function HomePage() {
         rankedById={rankedById}
         haventWatchedAtByMovie={state.haventWatchedAtByMovie}
         removedAtByMovie={state.removedAtByMovie}
-        onSelectMovie={(movie) => setScoreCardMovieId(movie.id)}
+        onSelectMovie={(movie) => setOverlayMovieId(movie.id)}
       />
 
       {/* Navigation */}
@@ -460,6 +452,7 @@ export default function HomePage() {
                 bucketLabel={state.haventWatchedAtByMovie[movie.id] ? "Haven't watched" : "Not rated"}
                 onRate={() => startRating(movie.id)}
                 onRemove={() => removeMovieForCurrentUser(movie.id)}
+                onViewDetails={() => setOverlayMovieId(movie.id)}
                 currentUserId={user?.id}
                 onRemoveGlobally={() => handleRemoveMovieGlobally(movie.id)}
               />
@@ -473,7 +466,7 @@ export default function HomePage() {
           rankings={state.rankings}
           movieById={movieById}
           rankedById={rankedById}
-          onInspectMovie={setDetailMovieId}
+          onViewDetails={setOverlayMovieId}
           onRemoveMovie={removeMovieForCurrentUser}
           onRemoveMovieGlobally={handleRemoveMovieGlobally}
           currentUserId={user?.id}
@@ -507,30 +500,18 @@ export default function HomePage() {
         />
       )}
 
-      {detailMovie && detailRanking && (
-        <MovieDetailDrawer
-          movie={detailMovie}
-          rank={detailRanking}
-          session={detailSession ?? undefined}
+      {overlayMovieId && movieById.get(overlayMovieId) && (
+        <MovieDetailOverlay
+          movie={movieById.get(overlayMovieId)!}
+          ranked={rankedById.get(overlayMovieId)}
+          session={state.sessions[overlayMovieId] ?? undefined}
           movieById={movieById}
-          onClose={() => setDetailMovieId(null)}
-          onRerate={() => {
-            setDetailMovieId(null);
-            startRating(detailMovie.id);
-          }}
-        />
-      )}
-
-      {scoreCardMovieId && movieById.get(scoreCardMovieId) && (
-        <MovieScoreCard
-          movie={movieById.get(scoreCardMovieId)!}
-          ranked={rankedById.get(scoreCardMovieId)}
           friendIds={friendIds}
           onRate={() => {
-            setScoreCardMovieId(null);
-            startRating(scoreCardMovieId);
+            setOverlayMovieId(null);
+            startRating(overlayMovieId);
           }}
-          onClose={handleScoreCardClose}
+          onClose={handleOverlayClose}
         />
       )}
     </main>
