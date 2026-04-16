@@ -55,9 +55,9 @@ export async function GET(req: Request) {
   }
 
   // OMDb returns Search array; keep this lightweight: choose first result.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const first = (search as any).Search?.[0];
-  const imdbID = first?.imdbID;
+  const searchResults = (search as Record<string, unknown>)["Search"];
+  const first = Array.isArray(searchResults) ? (searchResults[0] as Record<string, string>) : null;
+  const imdbID = first?.["imdbID"];
   if (!imdbID) {
     return NextResponse.json({ ok: false, reason: "not_found", debug: { title } }, { status: 200 });
   }
