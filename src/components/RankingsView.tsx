@@ -13,7 +13,7 @@ interface RankingsViewProps {
   rankings: Record<RatingBucket, string[]>;
   movieById: Map<string, Movie>;
   rankedById: Map<string, RankedMovie>;
-  onInspectMovie?: (movieId: string) => void;
+  onViewDetails?: (movieId: string) => void;
   onRemoveMovie?: (movieId: string) => void;
   onRemoveMovieGlobally?: (movieId: string) => void;
   currentUserId?: string;
@@ -23,7 +23,7 @@ export function RankingsView({
   rankings,
   movieById,
   rankedById,
-  onInspectMovie,
+  onViewDetails,
   onRemoveMovie,
   onRemoveMovieGlobally,
   currentUserId
@@ -32,7 +32,6 @@ export function RankingsView({
     <div className="space-y-10">
       {BUCKETS.map((bucket) => (
         <section key={bucket}>
-          {/* Section header */}
           <div className="mb-1 flex items-center gap-3">
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${bucketDot[bucket]}`} />
             <h2 className="font-mono text-[11px] tracking-[0.2em] uppercase text-zinc-500">
@@ -54,13 +53,14 @@ export function RankingsView({
               return (
                 <li
                   key={movieId}
-                  className="group flex items-center gap-4 border-b border-line/30 py-3 last:border-0"
+                  className="group flex cursor-pointer items-center gap-4 rounded border-b border-line/30 py-3 last:border-0 hover:bg-zinc-900/30 transition-colors duration-150"
+                  onClick={() => onViewDetails?.(movieId)}
                 >
                   <span className="w-7 shrink-0 font-mono text-xs text-zinc-700">
                     {String(i + 1).padStart(2, "0")}
                   </span>
 
-                  <span className="min-w-0 flex-1 font-display text-base text-zinc-100 leading-snug truncate">
+                  <span className="min-w-0 flex-1 truncate font-display text-base leading-snug text-zinc-100">
                     {movie.title}
                   </span>
 
@@ -68,15 +68,10 @@ export function RankingsView({
                     {rank.score.toFixed(1)}
                   </span>
 
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                    {onInspectMovie && (
-                      <button
-                        className="btn py-1 text-xs"
-                        onClick={() => onInspectMovie(movieId)}
-                      >
-                        Details
-                      </button>
-                    )}
+                  <div
+                    className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {onRemoveMovie && (
                       <RemovePopover
                         triggerClassName="flex h-6 w-6 items-center justify-center rounded border border-line text-zinc-500 text-sm transition-colors hover:border-accent/50 hover:text-accent"
